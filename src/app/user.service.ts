@@ -1,48 +1,30 @@
 import { Injectable } from '@angular/core';
-import { User } from './user';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { IUser } from './user';
 
 @Injectable({
   providedIn: 'root'
 })
 export class UserService {
 
-  private users: Array<User>;
+  private apiUrl = 'https://localhost:7246/api';
 
-  constructor() {
-    this.users = new Array<User>();
-    this.users = [
-      {
-        id: 1,
-        firstName: "Max",
-        lastName: "Max",
-        email: "email1@gmail.com"
-      },
-      {
-        id: 2,
-        firstName: "Gleb",
-        lastName: "Gleb",
-        email: "email2@gmail.com"
-      }
-    ];
-   }
+  constructor(private http: HttpClient) {}
 
-  getUsers() {
-    return [...this.users];
+  getUsers(): Observable<IUser[]> {
+    return this.http.get<IUser[]>(`${this.apiUrl}/user`);
   }
 
-  addUser(user: User) {
-    this.users.push(user);
+  addUser(user: IUser): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/user`, user);
   }
 
-  updateUser(user: User) {
-    let index = this.users.findIndex((u) => u.id === user.id);
-    this.users[index].firstName = user.firstName;
-    this.users[index].lastName = user.lastName;
-    this.users[index].email = user.email;
+  updateUser(user: IUser): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/user`, user);
   }
 
-  deleteUser(id: number) {
-    let index = this.users.findIndex((u) => u.id === id);
-    this.users.splice(index, 1);
+  deleteUser(id: number): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/user/${id}`);
   }
 }
