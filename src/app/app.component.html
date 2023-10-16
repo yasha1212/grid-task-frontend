@@ -1,67 +1,60 @@
-<h1>Users List</h1>
-<form [formGroup]="createUserForm" (ngSubmit)="addUser()" >
-  <div>
-    <label>First Name</label>
-    <input name="firstName" formControlName="firstName"/>
-  </div>
-  <div>
-    <label>Last Name</label>
-    <input name="lastName" formControlName="lastName"/>
-  </div>
-  <div>
-    <label>Email</label>
-    <input name="email" formControlName="email"/>
-  </div>
-</form>
-<table>
+<h1 class="m-3">Contacts App</h1>
+<input
+  class="btn btn-success btn-sm m-2"
+  *ngIf="!isInCreationState"
+  type="button"
+  value="New"
+  (click)="createUser()"
+/>
+
+<create-user-form 
+  *ngIf="isInCreationState" 
+  (onSubmit)="onUserCreated($event)"
+  (onCancel)="onFormCanceled()"
+>
+</create-user-form>
+
+<edit-user-form
+  *ngIf="isInEditingState"
+  [user]="editedUser!"
+  (onSubmit)="onUserEdited($event)"
+  (onCancel)="onFormCanceled()"
+>
+</edit-user-form>
+
+<table class="table table-hover table-bordered">
   <thead>
     <tr>
-      <td>Id</td>
-      <td>Firstname</td>
-      <td>Lastname</td>
-      <td>Email</td>
-      <td>Edit</td>
-      <td>Delete</td>
+      <th>Id</th>
+      <th>Firstname</th>
+      <th>Lastname</th>
+      <th>Email</th>
+      <th>Edit</th>
+      <th>Delete</th>
     </tr>
   </thead>
   <tbody>
     <tr *ngFor="let user of users">
-      <ng-template [ngTemplateOutlet]="chooseTemplate(user)" [ngTemplateOutletContext]="{ $implicit: user }">
-      </ng-template>
+      <td>{{ user.id }}</td>
+      <td>{{ user.firstName }}</td>
+      <td>{{ user.lastName }}</td>
+      <td>{{ user.email }}</td>
+      <td>
+        <input
+          class="btn btn-primary btn-sm"
+          type="button"
+          value="Edit"
+          (click)="editUser(user)"
+        />
+      </td>
+      <td>
+        <input
+          class="btn btn-danger btn-sm"
+          type="button"
+          value="Delete"
+          (click)="deleteUser(user)"
+        />
+      </td>
     </tr>
-  </tbody>  
+  </tbody>
 </table>
-
-<ng-template #readOnlyRow let-user>
-  <td>{{user.id}}</td>
-  <td>{{user.firstName}}</td>
-  <td>{{user.lastName}}</td>
-  <td>{{user.email}}</td>
-  <td>
-    <input type="button" value="Edit" (click)="editUser(user)" />
-  </td>
-  <td>
-    <input type="button" value="Delete" (click)="deleteUser(user)" />
-  </td>
-</ng-template>
-
-<ng-template #editableRow>
-  <td>
-    <input type="number" [(ngModel)]="editedUser!.id" readonly disabled />
-  </td>
-  <td>
-    <input type="text" [(ngModel)]="editedUser!.firstName" />
-  </td>
-  <td>
-    <input type="text" [(ngModel)]="editedUser!.lastName" />
-  </td>
-  <td>
-    <input type="text" [(ngModel)]="editedUser!.email" />
-  </td>
-  <td>
-    <input type="button" value="Save" (click)="saveChanges()" />
-  </td>
-  <td>
-    <input type="button" value="Cancel" (click)="cancelChanges()" />
-  </td>
-</ng-template>

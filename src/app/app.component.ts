@@ -1,69 +1,79 @@
-import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
-import { UserService } from './user.service';
-import { IUser } from './user';
+import { Component, OnInit, OnDestroy, TemplateRef, ViewChild } from '@angular/core';
+import { UserService } from './shared/user.service';
+import { IUser } from './shared/user.model';
 import { FormControl, FormGroup } from '@angular/forms';
+import { Subject, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
 })
-export class AppComponent implements OnInit {
-  @ViewChild('readOnlyRow') readonlyRow!: TemplateRef<any>;
-  @ViewChild('editableRow') editableRow!: TemplateRef<any>;
-
-  createUserForm: FormGroup;
-
-  users: IUser[] = [];
+export class AppComponent implements OnInit, OnDestroy {
+  users: IUser[];
   editedUser: IUser|null = null;
+  isInCreationState: boolean = false;
+  isInEditingState: boolean = false;
 
-  constructor(private userService: UserService) {
-    this.createUserForm = new FormGroup({
-      "firstName": new FormControl(),
-      "lastName": new FormControl(),
-      "email": new FormControl()
-    });
-  }
+  private destroy$ = new Subject<void>();
+
+  constructor(private userService: UserService) {}
 
   ngOnInit() {
     this.loadUsers();
   }
 
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   loadUsers() {
     this.userService.getUsers()
+      .pipe(takeUntil(this.destroy$))
       .subscribe((data: IUser[]) => this.users = data);
   }
 
-  chooseTemplate(user: IUser) {
-    if (this.editedUser && this.editedUser.id === user.id) {
-      return this.editableRow;
-    } else {
-      return this.readonlyRow;
-    }
+  onUserCreated(user: IUser) {
+    this.userService.addUser(user)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.loadUsers();
+        this.isInCreationState = false;
+      });
   }
 
-  addUser() {
-    
+  onUserEdited(user: IUser) {
+    this.userService.updateUser(user)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.loadUsers();
+        this.isInEditingState = false;
+        this.editedUser = null;
+      });
+  }
+
+  onFormCanceled() {
+    this.isInCreationState = false;
+    this.isInEditingState = false;
+    this.editedUser = null;
+  }
+
+  createUser() {
+    this.isInCreationState = true;
+    this.isInEditingState = false;
+    this.editedUser = null;
   }
 
   editUser(user: IUser) {
-    this.editedUser = user;
+    this.editedUser = this.users.find((u) => u.id == user.id)!;
+    this.isInCreationState = false;
+    this.isInEditingState = true;
   }
 
   deleteUser(user: IUser) {
     this.userService.deleteUser(user.id)
+      .pipe(takeUntil(this.destroy$))
       .subscribe(() => this.loadUsers());
-  }
-
-  saveChanges() {
-    this.userService.updateUser(this.editedUser as IUser)
-      .subscribe(() => {
-        this.editedUser = null;
-        this.loadUsers();
-      });
-  }
-
-  cancelChanges() {
-    this.editedUser == null;
   }
 }
